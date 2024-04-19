@@ -1,0 +1,26 @@
+# jax (see README.md)
+diffrax
+dm-pix
+einops
+equinox
+h5py
+hydra-core
+hydra-ray-launcher
+hydra-submitit-launcher
+imageio
+ipdb
+jaxtyping
+jupyter
+jupyterlab
+matplotlib
+moviepy
+optax
+pandas
+scikit-learn
+seaborn
+sigfig
+tensorboard-plugin-profile
+tensorflow
+tensorflow-datasets
+tqdm
+wandb

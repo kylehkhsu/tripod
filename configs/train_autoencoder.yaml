@@ -1,0 +1,105 @@
+defaults:
+  - override hydra/launcher: slurm
+  - _self_
+
+hydra:
+  callbacks:
+    log_job_return:
+      _target_: hydra.experimental.callbacks.LogJobReturnCallback
+  job:
+    chdir: True
+  run:
+    dir: /iris/u/kylehsu/outputs/disentangle/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweep:
+    dir: ${hydra.run.dir}
+    subdir: ${hydra.job.num}
+  sweeper:    # only invoked if --multirun is used
+    params:
+      experiment.seed: 1001, 1002, 1003
+      data.name: shapes3d
+      model.lambdas.latent_multiinformation: 1e-4
+      model.lambdas.hessian_penalty_normalized: 1e-2
+
+# good hyperparameters for other datasets
+#      data.name: mpi3d
+#      model.lambdas.latent_multiinformation: 1e-8
+#      model.lambdas.hessian_penalty_normalized: 1e-4
+#
+#      data.name: falcor3d
+#      model.lambdas.latent_multiinformation: 1e-10
+#      model.lambdas.hessian_penalty_normalized: 1e-2
+#
+#      data.name: isaac3d
+#      model.lambdas.latent_multiinformation: 1e-4
+#      model.lambdas.hessian_penalty_normalized: 1e-8
+
+optim:
+  num_steps: 250000
+  learning_rate: 0.0002
+  weight_decay: 0
+  clip: 1.
+
+model:
+  _partial_: True
+  _target_: disentangle.models.Autoencoder
+  encoder:
+    _partial_: True
+    _target_: disentangle.nn.ResidualEncoder
+  decoder:
+    _partial_: True
+    _target_: disentangle.nn.ResidualDecoder
+    normalize_outputs: False
+  latent_size: ???
+  reconstruction_loss_fn: binary_cross_entropy
+  lambdas:
+    reconstruct: 1
+    latent_multiinformation: 0
+    hessian_penalty: 0
+    hessian_penalty_normalized: 0
+  hessian_regularization_on:
+    - cond
+    - block0
+    - block1
+    - block2
+#    - x_logits
+  regularized_attributes:
+    - encoder
+    - decoder
+  num_perturbations: 2
+  epsilon: 0.1
+  quantize_latents: True
+  num_quantized_values: 12
+
+experiment:
+  seed: 1000
+
+data:
+  name: shapes3d
+  num_val: 10000
+  possible_dirs:
+    - /scr-ssd/kylehsu/data   # CHANGE ME
+    - /scr/kylehsu/data       # CHANGE ME
+  seed: 8254
+  buffer_size: 10000
+  batch_size: 64
+
+eval:
+  period: 1e4
+  num_vis_rows:
+    val: 3
+    interpolate: 9
+  num_vis_cols: 16
+  num_intervene_cols: 16
+  num_intervene_values: 30
+  num_derivatives: 100
+
+wandb:  # CHANGE ME
+  project: disentangle
+  name: null
+  group: null
+  job_type: null
+
+debug: False
+
+checkpoint:
+  period: 1e4

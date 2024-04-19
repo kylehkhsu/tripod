@@ -1,0 +1,78 @@
+defaults:
+  - override hydra/launcher: slurm
+  - _self_
+
+hydra:
+  callbacks:
+    log_job_return:
+      _target_: hydra.experimental.callbacks.LogJobReturnCallback
+  job:
+    chdir: True
+  run:
+    dir: /iris/u/kylehsu/outputs/disentangle/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweep:
+    dir: ${hydra.run.dir}
+    subdir: ${hydra.job.num}
+  sweeper:    # only invoked if --multirun is used
+    params:
+
+optim:
+  num_steps: 250000
+  learning_rate: 0.0002
+  weight_decay: 0
+  clip: 1.
+
+model:
+  _partial_: True
+  _target_: disentangle.models.TCVAE
+  encoder:
+    _partial_: True
+    _target_: disentangle.nn.ResidualEncoder
+  decoder:
+    _partial_: True
+    _target_: disentangle.nn.ResidualDecoder
+    normalize_outputs: False
+  latent_size: ???
+  reconstruction_loss_fn: binary_cross_entropy
+  lambdas:
+    reconstruct: 1
+    total_correlation: 1
+    mutual_information: 1
+    dimensionwise_kl: 1
+  regularized_attributes:
+    - encoder
+    - decoder
+
+experiment:
+  seed: 1000
+
+data:
+  name: shapes3d
+  num_val: 10000
+  possible_dirs:
+    - /scr-ssd/kylehsu/data   # CHANGE ME
+    - /scr/kylehsu/data       # CHANGE ME
+  seed: 8254
+  buffer_size: 10000
+  batch_size: 64
+
+eval:
+  period: 1e4
+  num_vis_rows:
+    val: 3
+    interpolate: 9
+  num_vis_cols: 16
+  num_intervene_cols: 16
+  num_intervene_values: 30
+  num_derivatives: 100
+
+wandb:
+  project: disentangle
+  name: tcvae
+  group: null
+  job_type: null
+
+debug: False
+
+checkpoint:
+  period: 1e4
